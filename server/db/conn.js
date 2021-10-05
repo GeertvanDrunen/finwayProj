@@ -19,10 +19,9 @@ var _db;
 module.exports = {
   connectToServer: function (callback) {
     client.connect(function (err, db) {
-      // Verify we got a good "db" object
       if (db)
       {
-        _db = db.db("myFirstDatabase");
+        _db = db.db("calculations");
         console.log("Successfully connected to MongoDB."); 
 
         io.on("connection", socket => {
@@ -30,8 +29,8 @@ module.exports = {
                 console.log('new user connected');
             });
 
-            socket.on('addRecord', () => {
-                addRecord()
+            socket.on('addCalculation', (payload) => {
+                addCalculation(payload)
             });
 
             socket.on("disconnect", () => {
@@ -39,11 +38,8 @@ module.exports = {
             });
         });
 
-        function addRecord() {
-            _db.collection.insert({
-                calculation: 'test',
-                timestamp: 'test'
-            });
+        function addCalculation(payload) {
+            _db.collection('history').insertOne(payload);
         }
 
         httpServer.listen(8081, () => console.log(`Listening on port 8081`));
