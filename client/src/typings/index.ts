@@ -1,5 +1,5 @@
 export interface CalculationItem {
   originalQuery: string;
-  calculation: string;
-  timestamp: string;
+  calculation?: number;
+  timestamp?: string;
 }

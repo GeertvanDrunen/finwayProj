@@ -1,9 +1,9 @@
 import "./chat-module.scss";
 import { CaretRightFilled } from "@ant-design/icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { CalculationItem } from "../typings";
-import { evaluate } from "mathjs";
+import { useEvaluateQueryHook } from "../hooks";
 
 const socket = io("http://localhost:8081");
 
@@ -13,8 +13,9 @@ socket.on("connect", () => {
 
 const ChatModule: React.FunctionComponent = () => {
   const [query, setQuery] = useState<string>("");
-  const [history, setHistory] = useState<CalculationItem[]>();
+  const evaluatedQuery = useEvaluateQueryHook(query);
 
+  const [history, setHistory] = useState<CalculationItem[]>();
   socket.on("deliverHistory", (payload: CalculationItem[]) => {
     setHistory({ ...history, ...payload });
   });
@@ -23,22 +24,27 @@ const ChatModule: React.FunctionComponent = () => {
     if (query.length > 0) {
       if (query?.toLowerCase() === "history") {
         socket.emit("requestHistory");
-      } else {
-        try {
-          const result = evaluate(query);
-          let calculation: CalculationItem = {
-            originalQuery: query,
-            calculation: result,
-            timestamp: new Date().toUTCString(),
-          };
-          socket.emit("addCalculation", calculation);
-          setHistory({ ...history, ...[calculation] });
-        } catch (err) {
-          console.error("this command cannot be calculated", err);
+      } else if (evaluatedQuery) {
+        let calculation: CalculationItem = {
+          originalQuery: query,
+          calculation: evaluatedQuery,
+          timestamp: new Date().toUTCString(),
+        };
+        socket.emit("addCalculation", calculation);
+        if (history) {
+          setHistory([...history, calculation]);
+        } else {
+          setHistory([calculation]);
         }
+      } else {
+        console.error("this command cannot be parsed");
       }
     }
   };
+
+  useEffect(() => {
+    console.log(evaluatedQuery);
+  }, [evaluatedQuery]);
 
   return (
     <div className={"chat-module"}>
@@ -47,7 +53,16 @@ const ChatModule: React.FunctionComponent = () => {
         <div className={"chat-module__heading-title"}>Finway Calculator</div>
       </div>
       <div className={"chat-module__body"}>
-        <div className={"chat-module__body-inner"}>test</div>
+        <div className={"chat-module__body-inner"}>
+          {history &&
+            Array.from(history).map((cItem) => {
+              return (
+                <div className={"chat-module__chat-item"}>
+                  {cItem.originalQuery}
+                </div>
+              );
+            })}
+        </div>
         <div className={"chat-module__controls"}>
           <input
             className={"chat-module__input"}
