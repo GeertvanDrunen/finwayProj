@@ -15,7 +15,7 @@ const ChatModule: React.FunctionComponent = () => {
 
   const [history, setHistory] = useState<CalculationItem[]>([]);
 
-  // When receiving the history, update the payload
+  // When receiving the history, update the local state to append the payload
   socket.on("deliverHistory", (payload: CalculationItem[]) => {
     setHistory([...history, ...[...payload].reverse()]);
     setQuery("");
@@ -23,7 +23,7 @@ const ChatModule: React.FunctionComponent = () => {
 
   // on submit do the following:
   // if the query is equal to the string 'history', request the history from the socket
-  // else check if the evaluatedQuery is a number, if it's not, show an error to the user
+  // else check if the evaluatedQuery property is a number, if it's not, show an error to the user
   // If evaluatedQuery is a number, create a new calculation with the original query and result and emit this to the socket
   // setHistory with the new calculation added
   const onSubmitPressed = () => {
@@ -43,6 +43,7 @@ const ChatModule: React.FunctionComponent = () => {
       } else {
         alert("This command cannot be parsed. Please try again");
         console.error("this command cannot be parsed");
+        setQuery("");
       }
     }
   };
