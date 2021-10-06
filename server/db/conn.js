@@ -33,6 +33,10 @@ module.exports = {
                 addCalculation(payload)
             });
 
+            socket.on('requestHistory', () => {
+                fetchHistory(socket);
+            });
+
             socket.on("disconnect", () => {
                 console.log("user disconnected");
             });
@@ -42,6 +46,13 @@ module.exports = {
             _db.collection('history').insertOne(payload);
         }
 
+        function fetchHistory(socket) {
+            _db.collection("history").find().sort({_id: -1}).limit(10).toArray(function (err, result) {
+              if (err) throw err;
+              socket.emit('deliverHistory', result);
+            });
+        }
+        
         httpServer.listen(8081, () => console.log(`Listening on port 8081`));
       }
       return callback(err);
